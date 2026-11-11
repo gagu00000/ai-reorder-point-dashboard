@@ -12,6 +12,7 @@ All results below were produced on the final code. Commands to reproduce are in 
 | Holdout report, 100 products × 60 unseen days | `npm run report:holdout` | re-run reproduces the earlier numbers exactly (max cost difference 0.0) |
 | Python notebooks | `nbconvert --execute` | both execute without error |
 | Lighthouse (desktop, production build) | `lighthouse --preset=desktop` | Performance 99–100 · Accessibility 100 · Best practices 100 |
+| Browser tests against the **live Netlify site** | `E2E_BASE_URL=https://ai-reorder-point-dashboard.netlify.app npm run e2e` | 9 / 9 passed (after the badge fix below) |
 
 Lighthouse detail (Control Tower / Forecasting / Optimisation): LCP 0.8 s, total blocking time 0 ms, CLS ≤ 0.013.
 Remaining notices are informational: "missing source maps" is deliberate, because it keeps the source private.
@@ -50,6 +51,7 @@ Remaining notices are informational: "missing source maps" is deliberate, becaus
 | Browser review | Narrative claimed the optimised policy always wins | Text adapts to the actual outcome |
 | e2e console guard | echarts-gl warning in production | Explicit surface data shape |
 | Fixture review | The console check only ran in one test (lazy fixture) | Automatic fixture; verified with a deliberately failing probe |
+| Live-site tests | Netlify's free-plan badge (injected script rendered in a srcdoc iframe) was blocked by the CSP, logging an error | Its one inline script allowed by SHA-256 hash; no `unsafe-inline` |
 | CSP test | The WebGL 3D chart failed under the strict CSP (claygl compiles size expressions with `new Function`) | Build-time replacement with a safe evaluator, tested against every expression echarts-gl ships; no `unsafe-eval` needed |
 
 ## Deviations from the approved plan

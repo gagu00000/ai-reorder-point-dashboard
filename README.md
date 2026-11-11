@@ -74,10 +74,12 @@ python scripts/export_fixtures.py
    - Node: 22
 3. Deploy. The build runs the TypeScript check and Vite build, which take about a minute.
 4. **Make it reachable.** On the free plan, a *private* project can only be opened by its owner (you, logged in to Netlify). To share the link: Project configuration → General → Visitor access → Project visibility → Public. Anyone with the URL can then open the dashboard and the derived data it loads.
-5. Check the live site:
-   - every page loads;
-   - "Add new data → Next day" moves the planning date;
-   - the browser console shows no errors.
+5. Check the live site. Either by hand (every page loads; "Add new data → Next day" moves the planning date; the browser console shows no errors), or run the whole browser test suite against it:
+
+```bash
+cd dashboard
+E2E_BASE_URL=https://<your-site>.netlify.app npm run e2e
+```
 
 ## Data and privacy ("No sharing of data with peers")
 

@@ -21,6 +21,9 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# script-src allows exactly one inline script by hash: the free-plan Netlify badge (injected by
+# Netlify as /.netlify/scripts/hud, rendered in a srcdoc iframe that inherits this policy). If Netlify
+# changes that script, only the badge stops rendering; the dashboard is unaffected.
 [[headers]]
   for = "/*"
   [headers.values]
@@ -28,4 +31,4 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-BkKP2XO6WOEc3kXOiLr2ZoY83hamalKjPY9xBcbXVuw='; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
