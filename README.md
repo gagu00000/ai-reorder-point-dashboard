@@ -65,13 +65,15 @@ What the numbers say: a better forecast alone cuts cost by about 7%. The large g
 
 ```mermaid
 flowchart LR
-    A["Kaggle retail data<br/>100 products × 760 days"] --> B["Python: audit and preprocessing<br/>price leakage removed<br/>lead times from the ledger"]
-    B --> C["Derived data<br/>+ trained LSTM weights"]
-    C --> D["Forecast worker<br/>ETS · Ridge · LSTM · Ensemble"]
-    N["New data<br/>next day · typed · CSV"] --> D
-    D --> E["Planning worker<br/>slide formula · Monte Carlo<br/>day-by-day policy simulation"]
-    E --> F["Optimisation worker<br/>Gaussian process<br/>constrained expected improvement"]
-    D & E & F --> G["Dashboard<br/>six pages, live"]
+    A["Kaggle retail data<br/>100 products × 760 days"] --> B["Python<br/>audit · preprocessing<br/>LSTM training"]
+    B --> W
+    N["New data<br/>next day · typed · CSV"] --> W
+    subgraph W["In the visitor's browser (Web Workers)"]
+        direction TB
+        D["1 · Forecast<br/>ETS · Ridge · LSTM"] --> E["2 · Safety stock<br/>formula · Monte Carlo<br/>policy simulation"]
+        E --> F["3 · Bayesian optimisation<br/>Gaussian process"]
+    end
+    W --> G["Dashboard<br/>six live pages"]
 ```
 
 - **Honest evaluation.** Data is split into training (to 2 Sep 2023), validation (to 1 Dec 2023) and a 60-day holdout. The dashboard plans as of 1 Dec 2023, so nothing it recommends has seen the days it is tested on.
