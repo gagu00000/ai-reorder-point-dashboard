@@ -1,0 +1,46 @@
+{
+  "name": "ai-reorder-point-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AI-enhanced reorder point and inventory management dashboard (AI in Operations, Session II exercise).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "report:holdout": "vitest run --config vitest.reports.config.ts",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "comlink": "^4.4.2",
+    "echarts": "^6.1.0",
+    "echarts-gl": "^2.1.0",
+    "idb-keyval": "^6.3.0",
+    "lucide-react": "^1.72.0",
+    "motion": "^14.12.0",
+    "papaparse": "^5.7.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.1",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^4.1.12"
+  }
+}

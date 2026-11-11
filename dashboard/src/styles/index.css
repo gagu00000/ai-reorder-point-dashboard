@@ -1,0 +1,105 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* Warehouse Control Tower — dark theme tokens. Colour meaning is identical on every chart:
+   cyan = AI / forecast, amber = baseline, slate = actual / as-is, rose = stockout / risk,
+   emerald = service / safe, violet = optimisation. */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  --color-ink-950: #05080f;
+  --color-ink-900: #0a0f1c;
+  --color-ink-850: #0d1424;
+  --color-ink-800: #111a2e;
+  --color-ink-700: #1a2540;
+  --color-line: rgb(148 163 184 / 0.14);
+  --color-line-strong: rgb(148 163 184 / 0.28);
+
+  --color-ai: #22d3ee;
+  --color-baseline: #f59e0b;
+  --color-actual: #94a3b8;
+  --color-risk: #f43f5e;
+  --color-safe: #34d399;
+  --color-opt: #a78bfa;
+
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-ink-900 text-slate-200 font-sans;
+    min-height: 100vh;
+  }
+  ::selection {
+    background: rgb(34 211 238 / 0.3);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ai);
+    outline-offset: 2px;
+  }
+}
+
+/* Blueprint floor-plan grid behind the app */
+@utility bg-blueprint {
+  background-color: var(--color-ink-900);
+  background-image:
+    radial-gradient(1200px 600px at 85% -10%, rgb(34 211 238 / 0.07), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgb(167 139 250 / 0.07), transparent 60%),
+    linear-gradient(rgb(148 163 184 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 163 184 / 0.045) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+}
+
+/* Glass panel */
+@utility glass {
+  background: linear-gradient(180deg, rgb(17 26 46 / 0.72), rgb(10 15 28 / 0.62));
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  border: 1px solid var(--color-line);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 12px 32px -16px rgb(0 0 0 / 0.7);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Native range input styled for the dark theme */
+@layer components {
+  input[type="range"].range {
+    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink-700;
+    accent-color: var(--color-ai);
+  }
+  input[type="range"].range::-webkit-slider-thumb {
+    @apply h-4 w-4 appearance-none rounded-full border-2 border-ink-900;
+    background: var(--color-ai);
+    box-shadow: 0 0 0 3px rgb(34 211 238 / 0.18);
+  }
+  input[type="range"].range::-moz-range-thumb {
+    @apply h-4 w-4 rounded-full border-2 border-ink-900;
+    background: var(--color-ai);
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(148 163 184 / 0.25) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
