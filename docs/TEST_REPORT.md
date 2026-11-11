@@ -12,7 +12,7 @@ All results below were produced on the final code. Commands to reproduce are in 
 | Holdout report, 100 products × 60 unseen days | `npm run report:holdout` | re-run reproduces the earlier numbers exactly (max cost difference 0.0) |
 | Python notebooks | `nbconvert --execute` | both execute without error |
 | Lighthouse (desktop, production build) | `lighthouse --preset=desktop` | Performance 99–100 · Accessibility 100 · Best practices 100 |
-| Browser tests against the **live Netlify site** | `E2E_BASE_URL=https://ai-reorder-point-dashboard.netlify.app npm run e2e` | 14 / 14 passed (after the audit fixes below) |
+| Browser tests against the **live Netlify site** | `E2E_BASE_URL=https://ai-reorder-point-dashboard.netlify.app npm run e2e` | 15 / 15 passed (after the audit fixes below and the first-time-viewer guidance) |
 
 Lighthouse detail (Control Tower / Forecasting / Optimisation): LCP 0.8 s, total blocking time 0 ms, CLS ≤ 0.013.
 Remaining notices are informational: "missing source maps" is deliberate, because it keeps the source private.
