@@ -190,7 +190,7 @@ export default function SafetyStock() {
             hint="Share of the variance caused by uncertain lead times" />
         </div>
 
-        <Panel index={1} busy={loading} title={`Demand during lead time · ${skuId}`}
+        <Panel index={1} busy={loading} pulseKey={data ? `${data.skuId}|${data.origin}` : undefined} title={`Demand during lead time · ${skuId}`}
           subtitle={view ? `${fmtInt(view.monteCarlo.trials)} simulated lead times. Red bars: scenarios that run out even at the Monte Carlo reorder point. Skewness ${fmt2(view.monteCarlo.skewness)} (a Normal curve has 0).` : undefined}
           actions={<Segmented label="Design" value={basis} onChange={setBasis}
             options={[{ value: "ai", label: "AI-enhanced" }, { value: "baseline", label: "Baseline" }]} />}>

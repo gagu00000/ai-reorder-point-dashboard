@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 interface PanelProps {
   title?: ReactNode;
@@ -11,17 +11,37 @@ interface PanelProps {
   index?: number;
   /** Show a subtle "computing" indicator in the header. */
   busy?: boolean;
+  /** When this value changes (new data recomputed the panel), the panel glows briefly. */
+  pulseKey?: string | number;
 }
 
 /** Glass panel with an optional header; fades up on entrance (respects reduced motion). */
-export function Panel({ title, subtitle, actions, children, className = "", index = 0, busy = false }: PanelProps) {
+export function Panel({ title, subtitle, actions, children, className = "", index = 0, busy = false, pulseKey }: PanelProps) {
   const reduce = useReducedMotion();
+  const [flash, setFlash] = useState(false);
+  const first = useRef(true);
+  useEffect(() => {
+    if (pulseKey === undefined) return;
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (reduce) return;
+    setFlash(true);
+    const t = setTimeout(() => setFlash(false), 900);
+    return () => clearTimeout(t);
+  }, [pulseKey, reduce]);
   return (
     <motion.section
       initial={reduce ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: reduce ? 0 : Math.min(index, 8) * 0.05, ease: [0.22, 1, 0.36, 1] }}
       className={`glass relative min-w-0 rounded-2xl p-4 sm:p-5 ${className}`}
+      // Inline so it wins over the glass utility's own shadow.
+      style={{
+        transition: "box-shadow 0.7s ease",
+        ...(flash ? { boxShadow: "0 0 0 1px rgb(34 211 238 / 0.45), 0 0 32px -8px rgb(34 211 238 / 0.5)" } : {}),
+      }}
     >
       {(title || actions) && (
         <header className="mb-3 flex flex-wrap items-start justify-between gap-3">

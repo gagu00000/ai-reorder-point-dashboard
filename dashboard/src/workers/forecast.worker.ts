@@ -52,6 +52,11 @@ async function freshModel(tf: typeof TF) {
 function lstm(): Promise<LstmState | null> {
   lstmPromise ??= (async () => {
     try {
+      // TensorFlow.js yields between training batches with requestAnimationFrame when it exists.
+      // Browsers pause animation frames for hidden pages, so a fine-tune started before the user
+      // switched tabs would freeze (and block day scoring, which waits for the model). A worker draws
+      // nothing, so hide rAF before TF.js loads and it falls back to plain task scheduling.
+      Object.defineProperty(self, "requestAnimationFrame", { value: undefined, configurable: true, writable: true });
       const tf = await import("@tensorflow/tfjs");
       const canWebgl = typeof OffscreenCanvas !== "undefined";
       if (!canWebgl || !(await tf.setBackend("webgl").catch(() => false))) await tf.setBackend("cpu");
@@ -68,6 +73,12 @@ function lstm(): Promise<LstmState | null> {
 
 function runner(s: LstmState): LstmRunner {
   return { spec: s.spec, forecast: (inputs, scales) => exclusive(async () => lstmForecast(s.tf, s.model, inputs, scales, s.spec)) };
+}
+
+/** Identifies the deployed dataset and trained models: saved state from another version is ignored. */
+async function dataStamp(): Promise<string> {
+  const b = await holder.base();
+  return `${b.meta.generatedAt}|${b.config.generatedAt}`;
 }
 
 /** Signature of the user rows the network has seen (rows up to and including `day`). */
@@ -115,6 +126,11 @@ const api = {
   async lstmStatus() {
     return status();
   },
+  /** Last day index of the current data, and a stamp identifying the deployed data and models. */
+  async timelineInfo() {
+    const [d, b] = await Promise.all([holder.get(), holder.base()]);
+    return { lastDay: d.dataset.dates.length - 1, recordedLastDay: b.dataset.dates.length - 1, stamp: await dataStamp() };
+  },
   /** Recorded values for one product on one day (to pre-fill the entry form), or null beyond the data. */
   async recordedDay(skuId: string, day: number) {
     const { dataset } = await holder.get();
@@ -147,8 +163,8 @@ const api = {
     const s = await lstm();
     if (!s) return status();
     await exclusive(async () => {
-      const meta = await get<{ knownThrough: number; version: number; seen: string }>(META_KEY).catch(() => undefined);
-      if (!meta || meta.seen !== (await rowsSeenSignature(meta.knownThrough))) return;
+      const meta = await get<{ knownThrough: number; version: number; seen: string; stamp?: string }>(META_KEY).catch(() => undefined);
+      if (!meta || meta.stamp !== (await dataStamp()) || meta.seen !== (await rowsSeenSignature(meta.knownThrough))) return;
       try {
         const saved = await s.tf.loadLayersModel(MODEL_URL);
         s.model.dispose();
@@ -182,7 +198,7 @@ const api = {
     await exclusive(async () => {
       try {
         await s.model.save(MODEL_URL);
-        await set(META_KEY, { knownThrough: observedUntil, version: s.version, seen: await rowsSeenSignature(observedUntil) });
+        await set(META_KEY, { knownThrough: observedUntil, version: s.version, seen: await rowsSeenSignature(observedUntil), stamp: await dataStamp() });
       } catch {
         // storage unavailable (private mode): the tuned model still lives for this session
       }

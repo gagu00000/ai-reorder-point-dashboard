@@ -22,9 +22,12 @@ export interface OptimizationRun {
 
 export interface LogEntry {
   at: string;            // ISO timestamp
-  kind: "stream" | "manual" | "csv" | "finetune" | "reset" | "restore";
+  kind: "stream" | "manual" | "csv" | "finetune" | "reset" | "restore" | "error";
   message: string;
 }
+
+/** Most optimisation runs kept in memory (older, finished ones are dropped). */
+const MAX_RUNS = 24;
 
 export interface LstmInfo {
   available: boolean;
@@ -44,6 +47,8 @@ interface AppState {
   dataVersion: number;
   hydrated: boolean;
   busy: string | null;     // what the timeline is doing right now, for the UI
+  /** Why the last attempt to add data failed (shown next to the controls), or null. */
+  dataError: string | null;
   streaming: boolean;
   scores: DayScore[];
   log: LogEntry[];
@@ -71,6 +76,7 @@ export const useAppStore = create<AppState>((set) => ({
   dataVersion: 0,
   hydrated: false,
   busy: null,
+  dataError: null,
   streaming: false,
   scores: [],
   log: [],
@@ -83,9 +89,12 @@ export const useAppStore = create<AppState>((set) => ({
   runs: {},
 
   setSku: (skuId) => set({ skuId }),
+  // The global service level is a cycle service level (the formula's Z); it only drives the
+  // optimiser's target when the optimiser is also constrained on cycle service, not on fill rate.
   setServiceLevel: (serviceLevel) => set((s) => ({
     serviceLevel,
-    optSettings: s.optSettings ? { ...s.optSettings, serviceTarget: serviceLevel } : s.optSettings,
+    optSettings: s.optSettings && s.optSettings.serviceMetric === "cycleServiceLevel"
+      ? { ...s.optSettings, serviceTarget: serviceLevel } : s.optSettings,
   })),
   setLeadTime: (v) => set((s) => {
     const leadTime = { ...s.leadTime, ...v };
@@ -96,7 +105,13 @@ export const useAppStore = create<AppState>((set) => ({
   patchOptSettings: (v) => set((s) => (s.optSettings ? { optSettings: { ...s.optSettings, ...v } } : {})),
   upsertRun: (key, patch) => set((s) => {
     const prev = s.runs[key] ?? { key, status: "running", progress: [], budget: 0, result: null, error: null };
-    return { runs: { ...s.runs, [key]: { ...prev, ...patch } } };
+    const runs = { ...s.runs, [key]: { ...prev, ...patch } };
+    // Keep memory bounded during long streaming sessions: drop the oldest finished runs.
+    const keys = Object.keys(runs);
+    for (let i = 0; keys.length - i > MAX_RUNS && i < keys.length; i++) {
+      if (keys[i] !== key && runs[keys[i]].status !== "running") delete runs[keys[i]];
+    }
+    return { runs };
   }),
 }));
 

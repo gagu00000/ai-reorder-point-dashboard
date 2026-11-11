@@ -7,7 +7,7 @@ import { CalendarPlus, Download, FastForward, FileUp, Pause, Play, RotateCcw, Sk
 import { useEffect, useRef, useState } from "react";
 import { forecastWorker } from "../../engine/client";
 import { useCatalog } from "../../hooks/useEngine";
-import { csvTemplate, CSV_COLUMNS } from "../../lib/data/csvImport";
+import { csvTemplate, CSV_COLUMNS, MAX_CSV_BYTES } from "../../lib/data/csvImport";
 import { WEATHER_CODES, type WeatherCode } from "../../lib/data/types";
 import type { UserRow, ValidationResult } from "../../lib/data/userData";
 import { fmtDate, fmtInt } from "../../lib/format";
@@ -50,7 +50,7 @@ function StreamTab({ unseen, nextDate, lastRecorded }: { unseen: number; nextDat
         <Button onClick={() => void advance({ source: "stream" })} disabled={disabled || streaming} icon={<SkipForward className="h-4 w-4" />}>Next day</Button>
         <Button variant="ghost" onClick={() => void advance({ source: "stream", lastDay: Math.min(lastRecorded, observedUntil + 7) })}
           disabled={disabled || streaming} icon={<FastForward className="h-4 w-4" />}>Next 7 days</Button>
-        <Button variant="ghost" onClick={() => (streaming ? stopStreaming() : startStreaming(lastRecorded))} disabled={unseen <= 0 && !streaming}
+        <Button variant="ghost" onClick={() => (streaming ? stopStreaming() : startStreaming())} disabled={unseen <= 0 && !streaming}
           icon={streaming ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}>{streaming ? "Pause" : "Auto-stream"}</Button>
       </div>
     </div>
@@ -58,7 +58,7 @@ function StreamTab({ unseen, nextDate, lastRecorded }: { unseen: number; nextDat
 }
 
 function EnterTab({ nextDay, nextDate, beyondData }: { nextDay: number; nextDate: string | null; beyondData: boolean }) {
-  const { skuId, busy, observedUntil } = useAppStore();
+  const { skuId, busy, observedUntil, streaming } = useAppStore();
   const [form, setForm] = useState<{ demand: number; promotion: boolean; weather: WeatherCode; epidemic: boolean; unitsSold: number; inventory: number; unitsOrdered: number } | null>(null);
   const [result, setResult] = useState<ValidationResult | null>(null);
 
@@ -115,7 +115,7 @@ function EnterTab({ nextDay, nextDate, beyondData }: { nextDay: number; nextDate
           <Toggle checked={form.epidemic} onChange={(v) => setForm({ ...form, epidemic: v })} label="Epidemic (all products)" />
         </div>
         <div className="flex items-end">
-          <Button onClick={() => void submit()} disabled={Boolean(busy)} icon={<CalendarPlus className="h-4 w-4" />}>Add this day</Button>
+          <Button onClick={() => void submit()} disabled={Boolean(busy) || streaming} icon={<CalendarPlus className="h-4 w-4" />}>Add this day</Button>
         </div>
       </div>
       <details className="text-xs text-slate-400">
@@ -134,14 +134,28 @@ function EnterTab({ nextDay, nextDate, beyondData }: { nextDay: number; nextDate
 type Preview = Awaited<ReturnType<ReturnType<typeof forecastWorker>["previewCsv"]>>;
 
 function CsvTab({ nextDate }: { nextDate: string | null }) {
-  const { skuId, busy, observedUntil } = useAppStore();
+  const { skuId, busy, observedUntil, streaming } = useAppStore();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [tooBig, setTooBig] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+
+  // A preview is only valid for the planning date it was checked against.
+  useEffect(() => {
+    setPreview(null);
+    setFileName(null);
+    if (input.current) input.current.value = "";
+  }, [observedUntil]);
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
     setFileName(file.name);
+    setPreview(null);
+    if (file.size > MAX_CSV_BYTES) {
+      setTooBig(`${file.name} is ${(file.size / 1024 / 1024).toFixed(1)} MB; the limit is ${MAX_CSV_BYTES / 1024 / 1024} MB.`);
+      return;
+    }
+    setTooBig(null);
     setPreview(await forecastWorker().previewCsv(await file.text(), observedUntil));
   };
 
@@ -173,14 +187,15 @@ function CsvTab({ nextDate }: { nextDate: string | null }) {
         <Button variant="ghost" onClick={template} icon={<Download className="h-4 w-4" />}>Template</Button>
         {fileName && <span className="text-xs text-slate-500">{fileName}</span>}
       </div>
+      {tooBig && <Messages errors={[tooBig]} warnings={[]} />}
       {preview && (
         <>
           <Messages errors={[...preview.errors, ...(v?.errors ?? [])]} warnings={[...preview.warnings, ...(v?.warnings ?? [])]} />
           {ok && days && (
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-safe/30 bg-safe/10 p-3 text-sm text-slate-200">
               <span>{fmtInt(v.rows.length)} rows · {days.size} day{days.size === 1 ? "" : "s"} · {new Set(v.rows.map((r) => r.skuId)).size} products — ready to append.</span>
-              <Button onClick={() => { void advance({ rows: v.rows, lastDay: v.lastDay!, source: "csv" }); setPreview(null); setFileName(null); }}
-                disabled={Boolean(busy)} icon={<FileUp className="h-4 w-4" />}>Append</Button>
+              <Button onClick={() => void advance({ rows: v.rows, lastDay: v.lastDay!, source: "csv" }).then((r) => { if (r.ok) { setPreview(null); setFileName(null); } })}
+                disabled={Boolean(busy) || streaming} icon={<FileUp className="h-4 w-4" />}>Append</Button>
             </div>
           )}
         </>
@@ -192,7 +207,7 @@ function CsvTab({ nextDate }: { nextDate: string | null }) {
 export function AddDataPanel({ index = 0 }: { index?: number }) {
   const [tab, setTab] = useState<Tab>("stream");
   const [confirmReset, setConfirmReset] = useState(false);
-  const { observedUntil, busy, streaming, lstm } = useAppStore();
+  const { observedUntil, busy, streaming, lstm, dataError } = useAppStore();
   const catalog = useCatalog().data;
   const lastRecorded = catalog ? catalog.dates.length - 1 : observedUntil;
   const nextDay = observedUntil + 1;
@@ -219,6 +234,7 @@ export function AddDataPanel({ index = 0 }: { index?: number }) {
       {tab === "enter" && <EnterTab nextDay={nextDay} nextDate={nextDate} beyondData={nextDay > lastRecorded} />}
       {tab === "csv" && <CsvTab nextDate={nextDate} />}
       {busy && <div className="mt-3"><BusyDot label={busy} /></div>}
+      {dataError && !busy && <p role="alert" className="mt-3 rounded-lg border border-risk/30 bg-risk/10 p-3 text-xs text-risk">{dataError}</p>}
     </Panel>
   );
 }

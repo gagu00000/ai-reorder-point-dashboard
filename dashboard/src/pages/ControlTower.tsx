@@ -147,7 +147,7 @@ export default function ControlTower() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <Panel index={1} busy={forecast.loading} title="Demand outlook" subtitle="Last 60 days and the 14-day AI forecast with its 80% band.">
+        <Panel index={1} busy={forecast.loading} pulseKey={forecast.data ? `${forecast.data.skuId}|${forecast.data.origin}` : undefined} title="Demand outlook" subtitle="Last 60 days and the 14-day AI forecast with its 80% band.">
           {spark ? <EChart option={spark} height={200} ariaLabel="Recent demand and the AI forecast" /> : <Skeleton height={200} />}
         </Panel>
         <Panel index={2} busy={sim.loading || opt.run?.status === "running"} title="Cost on the unseen days" subtitle="Holding + ordering + lost sales, same actual demand for every policy.">

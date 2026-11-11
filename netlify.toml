@@ -9,6 +9,19 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Missing build files and data must be real 404s, not the app's HTML with status 200 (that would
+# surface as a confusing module/JSON error, e.g. for a page left open across a redeploy).
+# Redirect rules only apply when no file exists at the path.
+[[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/data/*"
+  to = "/404.html"
+  status = 404
+
 # Single-page app: every route is served by index.html (React Router handles it).
 [[redirects]]
   from = "/*"

@@ -155,7 +155,7 @@ export default function Forecasting() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel className="xl:col-span-3" index={0} busy={loading}
+        <Panel className="xl:col-span-3" index={0} busy={loading} pulseKey={data ? `${data.skuId}|${data.origin}` : undefined}
           title={`14-day forecast · ${skuId}`}
           subtitle={`Shaded red: epidemic periods (the future assumes today's status persists). Green triangles: promotion days. Bands: conformal intervals from past forecast errors${data ? `, scaled ×${data.bandScale.toFixed(2)} to this product's errors over the last 90 days` : ""}.`}
           actions={<>
@@ -181,7 +181,7 @@ export default function Forecasting() {
           {option ? <EChart option={option} height={380} ariaLabel="Demand history, forecasts and prediction bands" /> : <Skeleton height={380} />}
           {data && (
             <Insight>
-              For <b className="text-white">{skuId}</b> the AI forecast expects about <b className="text-ai">{fmtInt(nextAvg)} units/day</b> over
+              For <b className="text-white">{data.skuId}</b> the AI forecast expects about <b className="text-ai">{fmtInt(nextAvg)} units/day</b> over
               the next two weeks, {nextAvg >= data.averageDemand ? "above" : "below"} the long-run average of {fmtInt(data.averageDemand)}.
               {promo && epi && <> For this product a promotion adds about <b className="text-white">{fmtSignedPct(promo.relative, 0)}</b> and an
               epidemic period changes demand by <b className="text-white">{fmtSignedPct(epi.relative, 0)}</b>, so planned promotions should raise the reorder point
@@ -243,7 +243,8 @@ export default function Forecasting() {
             </div>
           )}
           <Note>MASE below 1 beats yesterday's demand as a forecast. Bias above zero means over-forecasting. Holdout = 2 Dec 2023 – 30 Jan 2024,
-            never used for tuning; it contains the December peak and the epidemic that starts on 27 December.</Note>
+            never used for tuning; it contains the December peak and the epidemic that starts on 27 December. Significance (Diebold–Mariano test,
+            next-day squared error, validation, notebook 02): ridge beats the ensemble (DM = −4.88, p &lt; 0.001) and the static mean (DM = −13.5, p &lt; 0.001).</Note>
         </Panel>
 
         <Panel index={2} title="What drives demand for this SKU" subtitle="Ridge regression effects, holding everything else fixed (fitted on data up to the planning date).">

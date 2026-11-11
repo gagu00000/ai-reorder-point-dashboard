@@ -125,7 +125,7 @@ function SimulationView() {
       </PageHeader>
 
       <div className="grid gap-4">
-        <Panel index={0} busy={loading || opt.run?.status === "running"}
+        <Panel index={0} busy={loading || opt.run?.status === "running"} pulseKey={data ? `${data.skuId}|${data.from}` : undefined}
           title={`Stock on hand vs reorder point · ${skuId}`}
           subtitle="Stock path of one representative repetition. Diamonds: orders placed; red dots: days with lost sales; dotted grey: what the business actually held."
           actions={<>

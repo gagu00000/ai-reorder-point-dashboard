@@ -20,6 +20,8 @@ export interface CsvParseResult {
 }
 
 const MAX_ROWS = 20_000;
+/** Largest file read into memory (a full year for all 100 products is well under 2 MB). */
+export const MAX_CSV_BYTES = 5 * 1024 * 1024;
 
 function num(v: string | undefined): number | undefined {
   if (v === undefined || v.trim() === "") return undefined;
@@ -43,7 +45,12 @@ function normaliseDate(v: string): string {
 export function parseCsv(text: string): CsvParseResult {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const parsed = Papa.parse<Record<string, string>>(text.trim(), { header: true, skipEmptyLines: true, transformHeader: (h) => h.trim() });
+  // Excel and many editors save UTF-8 CSVs with a byte-order mark, which would otherwise end up
+  // inside the first column name ("﻿Date").
+  const clean = text.replace(/^﻿/, "").trim();
+  const parsed = Papa.parse<Record<string, string>>(clean, {
+    header: true, skipEmptyLines: true, transformHeader: (h) => h.replace(/^﻿/, "").trim(),
+  });
   if (parsed.errors.length) errors.push(...parsed.errors.slice(0, 5).map((e) => `Line ${(e.row ?? 0) + 2}: ${e.message}`));
   const header = parsed.meta.fields ?? [];
   const missing = CSV_COLUMNS.required.filter((c) => !header.includes(c));

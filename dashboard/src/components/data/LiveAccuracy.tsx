@@ -2,7 +2,7 @@
  * "Continuously update forecasts as new data arrives, improving accuracy and responsiveness":
  * out-of-sample next-day error of every model on each arriving day, and a log of what changed.
  */
-import { BrainCircuit, CalendarPlus, FileUp, History, RotateCcw, SkipForward } from "lucide-react";
+import { AlertTriangle, BrainCircuit, CalendarPlus, FileUp, History, RotateCcw, SkipForward } from "lucide-react";
 import { useMemo } from "react";
 import { COLORS, MODEL_STYLE } from "../../app/theme";
 import type { DayScore, ModelKey } from "../../engine/forecastService";
@@ -14,7 +14,7 @@ import { Panel } from "../ui/Panel";
 
 const ORDER: ModelKey[] = ["ridge", "lstm", "ensemble", "ets", "baseline"];
 const ICON: Record<LogEntry["kind"], typeof History> = {
-  stream: SkipForward, manual: CalendarPlus, csv: FileUp, finetune: BrainCircuit, reset: RotateCcw, restore: History,
+  stream: SkipForward, manual: CalendarPlus, csv: FileUp, finetune: BrainCircuit, reset: RotateCcw, restore: History, error: AlertTriangle,
 };
 
 function cumulative(scores: DayScore[], k: ModelKey): (number | string)[] {
@@ -88,7 +88,7 @@ export function LiveAccuracy({ index = 0 }: { index?: number }) {
               const Icon = ICON[e.kind];
               return (
                 <li key={`${e.at}-${e.message}`} className="flex gap-3 rounded-lg border border-line/70 bg-ink-950/40 p-2.5">
-                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${e.kind === "finetune" ? "text-opt" : e.kind === "reset" ? "text-risk" : "text-ai"}`} aria-hidden />
+                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${e.kind === "finetune" ? "text-opt" : e.kind === "reset" || e.kind === "error" ? "text-risk" : "text-ai"}`} aria-hidden />
                   <div className="min-w-0">
                     <p className="text-[12.5px] leading-relaxed text-slate-300">{e.message}</p>
                     <p className="text-[11px] text-slate-500">{ago(e.at)}</p>

@@ -70,7 +70,7 @@ export function NumberField({ label, value, onChange, step = 1, min, suffix, dis
       <label htmlFor={id} className="text-xs font-medium text-slate-300">{label}</label>
       <div className="flex items-center rounded-lg border border-line bg-ink-950/60 focus-within:border-ai/50">
         <input id={id} type="number" value={Number.isFinite(value) ? value : ""} step={step} min={min} disabled={disabled}
-          onChange={(e) => onChange(Number(e.target.value))}
+          onChange={(e) => onChange(e.target.value.trim() === "" ? Number.NaN : Number(e.target.value))}
           className="tabular w-full bg-transparent px-2.5 py-1.5 font-mono text-sm text-slate-100 outline-none disabled:text-slate-600" />
         {suffix && <span className="pr-2.5 text-xs text-slate-500">{suffix}</span>}
       </div>

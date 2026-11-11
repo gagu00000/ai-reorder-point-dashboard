@@ -46,7 +46,7 @@ export function useOptimizationSettings() {
  */
 export function useOptimization(auto: boolean) {
   const settings = useOptimizationSettings();
-  const { skuId, observedUntil, dataVersion, busy } = useAppStore();
+  const { skuId, observedUntil, dataVersion, busy, streaming } = useAppStore();
   const key = settings ? optimizationKey(skuId, observedUntil, dataVersion, settings) : null;
   const run = useAppStore((s) => (key ? s.runs[key] : undefined));
 
@@ -68,10 +68,11 @@ export function useOptimization(auto: boolean) {
       );
   }, [key, settings, skuId, observedUntil]);
 
-  // While data is arriving, wait for the timeline to settle before re-optimising.
+  // While data is arriving (or streaming), wait for the timeline to settle before re-optimising,
+  // so a 60-day stream does not queue 60 optimisations behind each other in the worker.
   useEffect(() => {
-    if (auto && key && !run && !busy) start();
-  }, [auto, key, run, start, busy]);
+    if (auto && key && !run && !busy && !streaming) start();
+  }, [auto, key, run, start, busy, streaming]);
 
   return { key, run, start, settings };
 }

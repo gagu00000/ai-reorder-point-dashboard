@@ -7,12 +7,12 @@ All results below were produced on the final code. Commands to reproduce are in 
 | Suite | Command | Result |
 |---|---|---|
 | TypeScript type check (strict) | `npx tsc --noEmit` | clean |
-| Unit, parity and integration tests (Vitest) | `npm test` | **114 / 114 passed** (13 files) |
-| Browser tests on the production build (Playwright, Chromium) | `npm run e2e` | **9 / 9 passed**; each test fails on any console error or warning |
+| Unit, parity and integration tests (Vitest) | `npm test` | **116 / 116 passed** (13 files) |
+| Browser tests on the production build (Playwright, Chromium) | `npm run e2e` | **14 / 14 passed**; each test fails on any console error or warning |
 | Holdout report, 100 products × 60 unseen days | `npm run report:holdout` | re-run reproduces the earlier numbers exactly (max cost difference 0.0) |
 | Python notebooks | `nbconvert --execute` | both execute without error |
 | Lighthouse (desktop, production build) | `lighthouse --preset=desktop` | Performance 99–100 · Accessibility 100 · Best practices 100 |
-| Browser tests against the **live Netlify site** | `E2E_BASE_URL=https://ai-reorder-point-dashboard.netlify.app npm run e2e` | 9 / 9 passed (after the badge fix below) |
+| Browser tests against the **live Netlify site** | `E2E_BASE_URL=https://ai-reorder-point-dashboard.netlify.app npm run e2e` | 14 / 14 passed (after the audit fixes below) |
 
 Lighthouse detail (Control Tower / Forecasting / Optimisation): LCP 0.8 s, total blocking time 0 ms, CLS ≤ 0.013.
 Remaining notices are informational: "missing source maps" is deliberate, because it keeps the source private.
@@ -67,3 +67,34 @@ Remaining notices are informational: "missing source maps" is deliberate, becaus
 ## Not verified
 
 - **Browsers:** tested in Chromium only. Firefox and Safari were not tested. The code uses standard APIs (Web Workers, IndexedDB, OffscreenCanvas with a CPU fallback for the LSTM).
+
+## End-to-end audit (after deployment)
+
+Every requirement was re-checked against the code, followed by automated scans, a code review of
+the riskiest paths, and measurements.
+
+**Found clean:** 0 dependency vulnerabilities (`npm audit`, production and dev), no leftover debug
+code, no raw-HTML injection points, and HSTS present on the live site.
+
+**Found and fixed:**
+
+| # | Severity | Finding | Fix | Verified by |
+|---|---|---|---|---|
+| 1 | High | LSTM fine-tuning leaked 16 tensors per run (old Adam optimiser state never released) | Dispose the previous optimiser before recompiling | Unit test: tensor count constant over repeated fine-tunes |
+| 2 | High | A fine-tune started on a hidden tab froze (TF.js waited for animation frames, which browsers pause), and blocked day scoring | TF.js in the worker uses plain task scheduling instead of `requestAnimationFrame` | Reproduced in a hidden browser pane, then fine-tune completed in 1.5 s after the fix |
+| 3 | High | A CSV preview made before other days arrived could still be appended, applying rows out of order and moving the planning date backwards | Preview discarded when the date moves; every addition re-validated against the current timeline inside `advance()` | e2e `audit.spec.ts` |
+| 4 | Medium | Failures while adding data were unhandled (console error) and could leave auto-stream stuck "on" | Errors reported in the panel and update log; streaming stops cleanly; workers re-synced | Code path review; full e2e suite with console guard |
+| 5 | Medium | Manual entry or CSV append during auto-stream was silently ignored | Those controls are disabled while streaming | e2e `audit.spec.ts` |
+| 6 | Medium | Auto-streaming on the overview queued one Bayesian optimisation per streamed day | Auto re-optimisation waits until streaming stops; optimisation runs kept in memory capped at 24 | e2e: main thread never blocked > 200 ms while streaming on the busiest page |
+| 7 | Medium | Browser-saved data/weights were not tied to a dataset version (a redeploy with new data would reuse them) | Saved state and LSTM weights carry a stamp of the deployed data and models; mismatches are cleared | e2e `audit.spec.ts` |
+| 8 | Medium | Missing files (`/assets/*`, `/data/*`) returned the app's HTML with status 200 | Real 404s for those paths; a page left open across a redeploy reloads once instead of failing | `curl` on the live site |
+| 9 | Low | No fallback when WebGL is unavailable (the 3D view would fail) | 3D offered only where WebGL works; a failing 3D view falls back to the 2D map | e2e with WebGL disabled |
+| 10 | Low | Excel CSVs with a byte-order mark failed ("missing column Date"); no size limit before reading a file | BOM stripped; files over 5 MB refused before reading | Unit test (BOM); e2e (6 MB file) |
+| 11 | Low | Clearing a number field submitted 0 instead of "empty" | Empty field means "not given" (demand then fails validation clearly) | Code review |
+| 12 | Low | The global service-level slider overwrote the optimiser's fill-rate target | Synced only when the optimiser constrains cycle service | Code review |
+| 13 | Low | Planned "pulse" on updated views and the Diebold–Mariano result on the dashboard were missing; the pulse at first did not show (shadow overridden) | Pulse added to four views (inline style); DM result shown with the leaderboard | Measured in the browser: glow 0.6 s after new data |
+
+**Not changed (by design or out of scope):**
+- The Netlify badge's script hash is fixed in the policy. If Netlify changes the badge, only the badge stops rendering.
+- Browser tests run in Chromium only.
+- The second commit message on GitHub mentions removing a password gate that was never committed (it was removed before the first commit). History was not rewritten.

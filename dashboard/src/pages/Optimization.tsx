@@ -4,6 +4,7 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { EChart, baseAxis, baseGrid, baseLegend, baseTooltip, type EChartOption } from "../components/charts/EChart";
 import { Button, ErrorNote, Insight, Note, NumberField, Segmented, Skeleton, Slider, Toggle } from "../components/ui/Controls";
 import { Kpi } from "../components/ui/Kpi";
+import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { BusyDot, Panel, PageHeader } from "../components/ui/Panel";
 import { COLORS } from "../app/theme";
 import { optimizeWorker } from "../engine/client";
@@ -12,6 +13,7 @@ import { useOptimization } from "../hooks/useEngine";
 import { useWorkerQuery } from "../hooks/useWorkerQuery";
 import { fmt2, fmtInt, fmtPct, fmtSignedPct } from "../lib/format";
 import type { TornadoBar } from "../lib/optimization/sensitivity";
+import { webglAvailable } from "../lib/webgl";
 import { useAppStore } from "../state/store";
 
 const Surface3D = lazy(() => import("../components/charts/Surface3D"));
@@ -183,6 +185,7 @@ export default function Optimization() {
   const { run, start, settings, key } = useOptimization(false);
   const { patchOptSettings, setServiceLevel, skuId, observedUntil } = useAppStore();
   const [show3d, setShow3d] = useState(false);
+  const canWebgl = useMemo(() => webglAvailable(), []);
   const [wantCurve, setWantCurve] = useState(false);
   const [wantGrid, setWantGrid] = useState(false);
   const result = run?.result ?? null;
@@ -306,11 +309,19 @@ export default function Optimization() {
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
           <Panel index={2} title={is2d ? "The optimiser's map of the decision space" : "Cost along the reorder point"}
             subtitle={is2d ? "Colour: cost predicted by the Gaussian process. Faded: likely to break a constraint. White dots: the simulations actually run." : "Gaussian-process prediction with ±2σ uncertainty, and the acquisition function that chose each next simulation."}
-            actions={is2d ? <Segmented label="View" value={show3d ? "3d" : "2d"} onChange={(v) => setShow3d(v === "3d")} size="xs"
+            actions={is2d && canWebgl ? <Segmented label="View" value={show3d ? "3d" : "2d"} onChange={(v) => setShow3d(v === "3d")} size="xs"
               options={[{ value: "2d", label: <span className="inline-flex items-center gap-1"><Grid3x3 className="h-3 w-3" />Map</span> },
-                { value: "3d", label: <span className="inline-flex items-center gap-1"><Box className="h-3 w-3" />3D (WebGL)</span> }]} /> : undefined}>
-            {is2d ? (show3d
-              ? <Suspense fallback={<Skeleton height={380} />}><Surface3D grid={result.surrogate} best={best ? { r: best.r, q: best.q, cost: best.annualCost } : null} /></Suspense>
+                { value: "3d", label: <span className="inline-flex items-center gap-1"><Box className="h-3 w-3" />3D (WebGL)</span> }]} />
+              : is2d ? <span className="text-[11px] text-slate-500">3D view needs WebGL (not available in this browser)</span> : undefined}>
+            {is2d ? (show3d && canWebgl
+              ? <ErrorBoundary resetKey={key ?? ""} fallback={(err) => (
+                  <div>
+                    <p role="status" className="mb-2 text-xs text-baseline">The 3D view could not start ({err.message}); showing the map instead.</p>
+                    {surf && <EChart option={surf} height={380} ariaLabel="Surrogate cost map over reorder point and order quantity" />}
+                  </div>
+                )}>
+                  <Suspense fallback={<Skeleton height={380} />}><Surface3D grid={result.surrogate} best={best ? { r: best.r, q: best.q, cost: best.annualCost } : null} /></Suspense>
+                </ErrorBoundary>
               : surf && <EChart option={surf} height={380} ariaLabel="Surrogate cost map over reorder point and order quantity" />)
               : slice && <EChart option={slice} height={380} ariaLabel="Gaussian-process cost prediction along the reorder point" />}
           </Panel>

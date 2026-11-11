@@ -96,6 +96,12 @@ describe("CSV import", () => {
     expect(bad.errors[0]).toMatch(/Demand/);
   });
 
+  it("accepts files saved with a UTF-8 byte-order mark (Excel)", () => {
+    const r = parseCsv(`﻿Date,Store ID,Product ID,Demand,Promotion,Weather Condition,Epidemic\r\n${next},S001,P0001,120,0,Snowy,0\r\n`);
+    expect(r.errors).toEqual([]);
+    expect(r.rows[0]).toMatchObject({ date: next, skuId: "S001-P0001", demand: 120 });
+  });
+
   it("the downloadable template parses back to a valid row", () => {
     const r = parseCsv(csvTemplate(row()));
     expect(r.errors).toEqual([]);

@@ -139,6 +139,9 @@ export async function fineTuneLstm(
 ): Promise<number[]> {
   if (samples.length === 0) return [];
   const { epochs = 3, learningRate = 1e-4, batchSize = 64 } = options;
+  // Release the previous optimiser's state (Adam keeps two tensors per weight) before replacing it;
+  // otherwise every fine-tune leaks GPU/CPU memory.
+  model.optimizer?.dispose();
   model.compile({ optimizer: tf.train.adam(learningRate), loss: "meanSquaredError" });
   const [enc, fut] = stack(tf, samples, spec);
   const tgt = new Float32Array(samples.length * spec.horizon);

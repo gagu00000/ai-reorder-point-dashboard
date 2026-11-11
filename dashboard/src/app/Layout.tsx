@@ -5,6 +5,7 @@ import { NavLink, Outlet, useLocation } from "react-router";
 import { Skeleton } from "../components/ui/Controls";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { useCatalog } from "../hooks/useEngine";
+import { addDays } from "../lib/data/calendar";
 import { fmtDate } from "../lib/format";
 import { useAppStore } from "../state/store";
 
@@ -74,7 +75,8 @@ function PlanningBadge() {
     <div className="flex items-center gap-2 rounded-lg border border-line bg-ink-950/50 px-2.5 py-1.5 text-xs text-slate-300"
       title="The planner only uses data up to this date. Later days are kept unseen for honest evaluation." aria-live="polite">
       <CalendarClock className="h-3.5 w-3.5 text-ai" aria-hidden />
-      <span>Planning as of <b className="font-semibold text-white" data-testid="planning-date">{fmtDate(data.dates[observedUntil])}</b></span>
+      <span>Planning as of <b className="font-semibold text-white" data-testid="planning-date">{fmtDate(observedUntil < data.dates.length
+        ? data.dates[observedUntil] : addDays(data.dates[data.dates.length - 1], observedUntil - data.dates.length + 1))}</b></span>
       {busy || streaming
         ? <span className="flex items-center gap-1 text-ai"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ai" />{streaming ? "streaming" : "updating"}</span>
         : unseen > 0 && <span className="hidden text-slate-500 sm:inline">· {unseen} unseen days</span>}

@@ -95,6 +95,18 @@ describe("LSTM in TensorFlow.js (parity with Keras)", () => {
     model.dispose();
   });
 
+  it("repeated fine-tuning does not leak tensors", async () => {
+    const model = loadLstm(tf, weights);
+    const sku = ds.skus[0];
+    const exog = buildExog(ds, 0, 720, 14);
+    const samples = Array.from({ length: 20 }, (_, j) => fineTuneSample(sku.demand, exog, 690 + (j % 10), scales[sku.id], spec));
+    await fineTuneLstm(tf, model, samples, spec, { epochs: 1 });
+    const after1 = tf.memory().numTensors;
+    for (let k = 0; k < 3; k++) await fineTuneLstm(tf, model, samples, spec, { epochs: 1 });
+    expect(tf.memory().numTensors).toBe(after1);
+    model.dispose();
+  });
+
   it("fine-tunes on newly observed windows and changes its forecast", async () => {
     const model = loadLstm(tf, weights);
     const idx = 0;
