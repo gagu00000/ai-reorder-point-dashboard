@@ -2,6 +2,8 @@
 import { useMemo, useState } from "react";
 import { EChart, baseAxis, baseGrid, baseLegend, baseTooltip, type EChartOption } from "../components/charts/EChart";
 import { AddDataPanel } from "../components/data/AddDataPanel";
+import { PageGuide } from "../components/help/PageGuide";
+import { Term } from "../components/help/Term";
 import { LiveAccuracy } from "../components/data/LiveAccuracy";
 import { Chip, ErrorNote, Insight, Note, Segmented, Skeleton, Toggle } from "../components/ui/Controls";
 import { Panel, PageHeader } from "../components/ui/Panel";
@@ -149,6 +151,7 @@ export default function Forecasting() {
         from history, seasonality, promotions, weather and epidemic periods. Price columns are excluded: the audit showed they are
         computed from same-day demand and would leak the answer.
       </PageHeader>
+      <PageGuide page="forecasting" />
 
       <div className="mb-4">
         <AddDataPanel index={0} />
@@ -212,11 +215,11 @@ export default function Forecasting() {
                 <thead>
                   <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-slate-500">
                     <th className="py-2 font-medium">Model</th>
-                    <th className="py-2 text-right font-medium">WAPE</th>
+                    <th className="py-2 text-right font-medium"><Term id="wape">WAPE</Term></th>
                     <th className="py-2 text-right font-medium">MAE</th>
                     <th className="py-2 text-right font-medium">RMSE</th>
-                    <th className="py-2 text-right font-medium">MASE</th>
-                    <th className="py-2 text-right font-medium">Bias</th>
+                    <th className="py-2 text-right font-medium"><Term id="mase">MASE</Term></th>
+                    <th className="py-2 text-right font-medium"><Term id="bias">Bias</Term></th>
                     <th className="py-2 text-right font-medium">vs baseline</th>
                   </tr>
                 </thead>

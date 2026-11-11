@@ -7,6 +7,8 @@ import { Panel, PageHeader } from "../components/ui/Panel";
 import { COLORS, POLICY_STYLE } from "../app/theme";
 import type { PolicyRun, SimulationResponse } from "../engine/inventoryService";
 import { NoUnseenDays } from "../components/data/NoUnseenDays";
+import { PageGuide } from "../components/help/PageGuide";
+import { Term } from "../components/help/Term";
 import { useOptimization, useSimulation, useUnseenDays } from "../hooks/useEngine";
 import { fmtDate, fmtInt, fmtPct, fmtSignedPct } from "../lib/format";
 import { useAppStore } from "../state/store";
@@ -123,6 +125,7 @@ function SimulationView() {
         Each policy is replayed day by day over the {n || 60} days after the planning date, using the demand that actually happened. Lead times are
         random (30 repetitions with identical random draws for every policy, so differences come from the policy alone). Unmet demand is lost.
       </PageHeader>
+      <PageGuide page="simulation" />
 
       <div className="grid gap-4">
         <Panel index={0} busy={loading || opt.run?.status === "running"} pulseKey={data ? `${data.skuId}|${data.from}` : undefined}
@@ -149,8 +152,8 @@ function SimulationView() {
                     <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-slate-500">
                       <th className="py-2 font-medium">Policy</th>
                       <th className="py-2 text-right font-medium">Order qty</th>
-                      <th className="py-2 text-right font-medium">Fill rate</th>
-                      <th className="py-2 text-right font-medium">Cycle service</th>
+                      <th className="py-2 text-right font-medium"><Term id="fillRate">Fill rate</Term></th>
+                      <th className="py-2 text-right font-medium"><Term id="serviceLevel">Cycle service</Term></th>
                       <th className="py-2 text-right font-medium">Stockout days</th>
                       <th className="py-2 text-right font-medium">Avg stock</th>
                       <th className="py-2 text-right font-medium">Total cost</th>

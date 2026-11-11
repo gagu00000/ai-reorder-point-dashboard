@@ -3,6 +3,8 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Suspense } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { Skeleton } from "../components/ui/Controls";
+import { GuideButton, GuidePanel } from "../components/help/GuidePanel";
+import { Term } from "../components/help/Term";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { useCatalog } from "../hooks/useEngine";
 import { addDays } from "../lib/data/calendar";
@@ -10,12 +12,12 @@ import { fmtDate } from "../lib/format";
 import { useAppStore } from "../state/store";
 
 export const NAV = [
-  { to: "/", label: "Control Tower", short: "Overview", icon: Gauge },
-  { to: "/forecasting", label: "Demand Forecasting", short: "Forecast", icon: TrendingUp },
-  { to: "/safety-stock", label: "Safety Stock & Monte Carlo", short: "Safety", icon: ShieldCheck },
-  { to: "/simulation", label: "Inventory Simulation", short: "Simulate", icon: Boxes },
-  { to: "/optimization", label: "Optimisation & Sensitivity", short: "Optimise", icon: Sparkles },
-  { to: "/method", label: "Method & Assumptions", short: "Method", icon: BookOpen },
+  { to: "/", label: "Control Tower", step: "Start here · overview", short: "Overview", icon: Gauge },
+  { to: "/forecasting", label: "Demand Forecasting", step: "Step 1", short: "Forecast", icon: TrendingUp },
+  { to: "/safety-stock", label: "Safety Stock & Monte Carlo", step: "Step 2", short: "Safety", icon: ShieldCheck },
+  { to: "/simulation", label: "Inventory Simulation", step: "Proof on unseen days", short: "Simulate", icon: Boxes },
+  { to: "/optimization", label: "Optimisation & Sensitivity", step: "Step 3", short: "Optimise", icon: Sparkles },
+  { to: "/method", label: "Method & Assumptions", step: "Data, checks, traceability", short: "Method", icon: BookOpen },
 ] as const;
 
 function Brand() {
@@ -75,7 +77,7 @@ function PlanningBadge() {
     <div className="flex items-center gap-2 rounded-lg border border-line bg-ink-950/50 px-2.5 py-1.5 text-xs text-slate-300"
       title="The planner only uses data up to this date. Later days are kept unseen for honest evaluation." aria-live="polite">
       <CalendarClock className="h-3.5 w-3.5 text-ai" aria-hidden />
-      <span>Planning as of <b className="font-semibold text-white" data-testid="planning-date">{fmtDate(observedUntil < data.dates.length
+      <span><Term id="planningDate">Planning as of</Term> <b className="font-semibold text-white" data-testid="planning-date">{fmtDate(observedUntil < data.dates.length
         ? data.dates[observedUntil] : addDays(data.dates[data.dates.length - 1], observedUntil - data.dates.length + 1))}</b></span>
       {busy || streaming
         ? <span className="flex items-center gap-1 text-ai"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ai" />{streaming ? "streaming" : "updating"}</span>
@@ -92,17 +94,23 @@ export function Layout() {
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-ink-950/70 px-3 py-5 backdrop-blur-xl lg:flex">
         <div className="px-2"><Brand /></div>
         <nav className="mt-8 flex flex-col gap-1" aria-label="Main">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {NAV.map(({ to, label, step, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === "/"}
               className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                 isActive ? "bg-ink-700/70 text-white shadow-[inset_2px_0_0_var(--color-ai)]" : "text-slate-400 hover:bg-ink-800/60 hover:text-slate-200"}`}>
               <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              {label}
+              <span className="leading-tight">
+                {label}
+                <span className="block text-[10px] font-medium uppercase tracking-wider text-slate-500">{step}</span>
+              </span>
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto rounded-xl border border-line bg-ink-900/60 p-3 text-[11px] leading-relaxed text-slate-500">
-          AI in Operations · Session II exercise. All computation runs in your browser; no data leaves this device.
+        <div className="mt-auto space-y-3">
+          <div className="px-1"><GuideButton /></div>
+          <div className="rounded-xl border border-line bg-ink-900/60 p-3 text-[11px] leading-relaxed text-slate-500">
+            AI in Operations · Session II exercise. All computation runs in your browser; no data leaves this device.
+          </div>
         </div>
       </aside>
 
@@ -111,7 +119,10 @@ export function Layout() {
           <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <div className="lg:hidden"><Brand /></div>
             <SkuPicker />
-            <PlanningBadge />
+            <div className="flex flex-wrap items-center gap-2">
+              <PlanningBadge />
+              <span className="lg:hidden"><GuideButton /></span>
+            </div>
           </div>
         </header>
 
@@ -129,6 +140,8 @@ export function Layout() {
           </AnimatePresence>
         </main>
       </div>
+
+      <GuidePanel />
 
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-line bg-ink-950/90 backdrop-blur-xl lg:hidden" aria-label="Main">
         {NAV.map(({ to, short, icon: Icon }) => (

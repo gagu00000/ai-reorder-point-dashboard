@@ -28,7 +28,7 @@ const BAR: Record<Tone, string> = {
 };
 
 interface KpiProps {
-  label: string;
+  label: ReactNode;
   value: number | null | undefined;
   format: (v: number) => string;
   tone?: Tone;

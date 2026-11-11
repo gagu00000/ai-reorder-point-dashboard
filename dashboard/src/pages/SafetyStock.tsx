@@ -2,6 +2,8 @@
 import { useMemo, useState } from "react";
 import { EChart, baseAxis, baseGrid, baseLegend, baseTooltip, type EChartOption } from "../components/charts/EChart";
 import { ErrorNote, Insight, Note, Segmented, Skeleton, Slider } from "../components/ui/Controls";
+import { PageGuide } from "../components/help/PageGuide";
+import { Term } from "../components/help/Term";
 import { Kpi } from "../components/ui/Kpi";
 import { Panel, PageHeader } from "../components/ui/Panel";
 import { COLORS } from "../app/theme";
@@ -144,6 +146,7 @@ export default function SafetyStock() {
         The slide's formula sizes the buffer from demand variability <i>and</i> lead-time uncertainty. The AI version feeds it the forecast
         (D̄) and the forecast's own errors (σ_D). Monte Carlo then simulates thousands of lead-time scenarios to check the formula's Normal assumption.
       </PageHeader>
+      <PageGuide page="safety" />
 
       <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
         <Panel index={0} title="Inputs" subtitle="Shared across the dashboard." className="lg:row-span-2 self-start">
@@ -180,13 +183,13 @@ export default function SafetyStock() {
         </Panel>
 
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Kpi index={0} label="Formula safety stock" tone="baseline" value={view?.formula.safetyStock} format={fmtInt}
+          <Kpi index={0} label={<Term id="safetyStock">Formula safety stock</Term>} tone="baseline" value={view?.formula.safetyStock} format={fmtInt}
             hint={`${basis === "ai" ? "AI-enhanced" : "Baseline"} inputs, units`} />
-          <Kpi index={1} label="Monte Carlo safety stock" tone="safe" value={view?.monteCarlo.safetyStock} format={fmtInt}
+          <Kpi index={1} label={<Term id="monteCarlo">Monte Carlo safety stock</Term>} tone="safe" value={view?.monteCarlo.safetyStock} format={fmtInt}
             hint={view ? `${gap >= 0 ? "+" : "−"}${fmtInt(Math.abs(gap))} units vs formula` : undefined} />
-          <Kpi index={2} label="Stockout risk at formula ROP" tone="risk" value={view?.monteCarlo.formulaStockoutProbability} format={(v) => fmtPct(v, 1)}
+          <Kpi index={2} label={<Term id="ddlt">Stockout risk at formula ROP</Term>} tone="risk" value={view?.monteCarlo.formulaStockoutProbability} format={(v) => fmtPct(v, 1)}
             hint={`Target: ${fmtPct(1 - serviceLevel, 1)} per cycle`} />
-          <Kpi index={3} label="Lead-time share of risk" tone="opt" value={view?.formula.leadTimeShare} format={(v) => fmtPct(v, 0)}
+          <Kpi index={3} label={<Term id="sigmaL">Lead-time share of risk</Term>} tone="opt" value={view?.formula.leadTimeShare} format={(v) => fmtPct(v, 0)}
             hint="Share of the variance caused by uncertain lead times" />
         </div>
 

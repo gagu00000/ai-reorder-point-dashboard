@@ -3,6 +3,9 @@ import { ArrowRight, Boxes, ShieldCheck, Sparkles, TrendingUp } from "lucide-rea
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { EChart, baseAxis, baseTooltip, type EChartOption } from "../components/charts/EChart";
+import { PageGuide } from "../components/help/PageGuide";
+import { Term } from "../components/help/Term";
+import { WelcomeCard } from "../components/help/WelcomeCard";
 import { Insight, Skeleton } from "../components/ui/Controls";
 import { Kpi } from "../components/ui/Kpi";
 import { BusyDot, Panel, PageHeader } from "../components/ui/Panel";
@@ -113,22 +116,24 @@ export default function ControlTower() {
 
   return (
     <>
+      <WelcomeCard />
       <PageHeader eyebrow="Control Tower" title={sku ? `${sku.id} · ${sku.category}, ${sku.region} region` : "Reorder point control tower"}>
         The baseline reorder-point calculator uses a static average and the slide's formula. The AI-enhanced version forecasts demand, sizes the
         buffer with Monte Carlo, and lets Bayesian optimisation choose the reorder point and order quantity — then everything is replayed on days
         the planner never saw.
       </PageHeader>
+      <PageGuide page="overview" />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi index={0} label="Demand, next 14 days" tone="ai" value={next} format={(v) => `${fmtInt(v)}/day`}
           hint={sku ? `history average ${fmtInt(sku.meanDemand)}/day` : undefined} />
-        <Kpi index={1} label="Recommended reorder point" tone="opt" value={best?.r} format={(v) => `${fmtInt(v)} units`}
+        <Kpi index={1} label={<Term id="rop">Recommended reorder point</Term>} tone="opt" value={best?.r} format={(v) => `${fmtInt(v)} units`}
           hint={formula ? `slide formula says ${fmtInt(formula.r)}` : opt.run?.status === "running" ? <BusyDot label="optimising" /> : undefined} />
         <Kpi index={2} label="Recommended order quantity" tone="opt" value={best?.q} format={(v) => `${fmtInt(v)} units`}
           hint={opt.run?.result ? `EOQ ${fmtInt(opt.run.result.eoq)}` : undefined} />
-        <Kpi index={3} label="Cost on unseen days" tone={saving > 0 ? "risk" : "safe"} value={Number.isFinite(saving) ? saving : null} format={(v) => fmtSignedPct(v)}
+        <Kpi index={3} label={<Term id="holdout">Cost on unseen days</Term>} tone={saving > 0 ? "risk" : "safe"} value={Number.isFinite(saving) ? saving : null} format={(v) => fmtSignedPct(v)}
           hint="vs the baseline calculator, same demand" />
-        <Kpi index={4} label="Stockout days" tone="risk" value={optimized?.metrics.stockoutDayRate} format={(v) => fmtPct(v)}
+        <Kpi index={4} label={<Term id="stockout">Stockout days</Term>} tone="risk" value={optimized?.metrics.stockoutDayRate} format={(v) => fmtPct(v)}
           hint={asis ? `as-is ordering: ${fmtPct(asis.metrics.stockoutDayRate)}` : undefined} />
       </div>
 

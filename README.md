@@ -6,6 +6,8 @@
 2. **Dynamic safety stock:** the slide's formula `SS = Z·√(σ_D²·L + D̄²·σ_L²)`, checked by Monte Carlo simulation.
 3. **AI-driven sensitivity analysis:** Bayesian optimisation of the reorder point and order quantity under constraints.
 
+**New here?** Open the live dashboard and use the **Start here** card or the **Guide** button: it gives a 5-minute walkthrough, shows where each part of the exercise is answered, and explains every term. Each page also opens with a short "How to read this page".
+
 All computation runs in the visitor's browser (Web Workers). There is no server, and data a visitor adds never leaves their browser.
 
 | Document | What it contains |

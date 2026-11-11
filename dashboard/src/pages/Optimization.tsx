@@ -4,6 +4,8 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { EChart, baseAxis, baseGrid, baseLegend, baseTooltip, type EChartOption } from "../components/charts/EChart";
 import { Button, ErrorNote, Insight, Note, NumberField, Segmented, Skeleton, Slider, Toggle } from "../components/ui/Controls";
 import { Kpi } from "../components/ui/Kpi";
+import { PageGuide } from "../components/help/PageGuide";
+import { Term } from "../components/help/Term";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { BusyDot, Panel, PageHeader } from "../components/ui/Panel";
 import { COLORS } from "../app/theme";
@@ -219,6 +221,7 @@ export default function Optimization() {
         Instead of sweeping parameters by hand, a Gaussian-process model learns how cost and service respond to the reorder point (and order
         quantity) from a few dozen full simulations, and picks each next experiment where it expects the biggest improvement that still meets your constraints.
       </PageHeader>
+      <PageGuide page="optimisation" />
 
       <div className="grid gap-4 lg:grid-cols-[310px_1fr]">
         <Panel index={0} title="Objective & constraints" subtitle="Minimise expected annual cost (holding + ordering + lost sales)." className="self-start">
@@ -277,13 +280,13 @@ export default function Optimization() {
 
         <div className="grid min-w-0 gap-4">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Kpi index={0} label="Recommended reorder point" tone="opt" value={best?.r} format={fmtInt}
+            <Kpi index={0} label={<Term id="rop">Recommended reorder point</Term>} tone="opt" value={best?.r} format={fmtInt}
               hint={f ? `slide formula: ${fmtInt(f.r)} units` : "run the optimiser"} />
             <Kpi index={1} label="Recommended order quantity" tone="opt" value={best?.q} format={fmtInt}
               hint={result ? `EOQ: ${fmtInt(result.eoq)} units` : undefined} />
-            <Kpi index={2} label="Expected annual cost" tone="safe" value={best?.annualCost} format={fmtInt}
+            <Kpi index={2} label={<Term id="annualCost">Expected annual cost</Term>} tone="safe" value={best?.annualCost} format={fmtInt}
               hint={best && f ? `${fmtSignedPct(best.annualCost / f.annualCost - 1)} vs formula + EOQ (${fmtInt(f.annualCost)})` : undefined} />
-            <Kpi index={3} label={s.serviceMetric === "fillRate" ? "Fill rate" : "Cycle service"} tone="ai" value={best?.service} format={(v) => fmtPct(v, 1)}
+            <Kpi index={3} label={s.serviceMetric === "fillRate" ? <Term id="fillRate">Fill rate</Term> : <Term id="serviceLevel">Cycle service</Term>} tone="ai" value={best?.service} format={(v) => fmtPct(v, 1)}
               hint={f ? `formula policy: ${fmtPct(f.service, 1)} · target ${fmtPct(s.serviceTarget, 1)}` : undefined} />
           </div>
 

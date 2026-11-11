@@ -8,7 +8,7 @@ All results below were produced on the final code. Commands to reproduce are in 
 |---|---|---|
 | TypeScript type check (strict) | `npx tsc --noEmit` | clean |
 | Unit, parity and integration tests (Vitest) | `npm test` | **116 / 116 passed** (13 files) |
-| Browser tests on the production build (Playwright, Chromium) | `npm run e2e` | **14 / 14 passed**; each test fails on any console error or warning |
+| Browser tests on the production build (Playwright, Chromium) | `npm run e2e` | **15 / 15 passed**; each test fails on any console error or warning |
 | Holdout report, 100 products × 60 unseen days | `npm run report:holdout` | re-run reproduces the earlier numbers exactly (max cost difference 0.0) |
 | Python notebooks | `nbconvert --execute` | both execute without error |
 | Lighthouse (desktop, production build) | `lighthouse --preset=desktop` | Performance 99–100 · Accessibility 100 · Best practices 100 |
@@ -37,6 +37,7 @@ Remaining notices are informational: "missing source maps" is deliberate, becaus
 | 3 · Optimal reorder points under constraints | Service, budget, capacity, min/max order | `inventoryOptimization.test.ts` (binding service constraint, capacity respected, reorder-point-only mode) | Pass |
 | 3 · Sensitivity analysis | Surrogate map, WebGL 3D surface, tornado charts, price-of-service curve | `inventoryOptimization.test.ts` (surfaces, tornado ordering, monotone service curve); e2e 3D view | Pass |
 | Dashboard: responsive, fast, no console errors | — | e2e phone width (all pages, 375 px), console guard on every test, Lighthouse | Pass |
+| Dashboard: self-explanatory for a first-time viewer | Start-here card, Guide panel (walkthrough, slide map, colour key, glossary), "How to read this page" on every page, plain-language definitions on technical terms | e2e `guide.spec.ts` (card, Guide open/close, remembered dismissal, term definition, page guide on all six pages) | Pass |
 | Dashboard: secure deployment | Strict CSP and security headers | e2e `security.spec.ts` (full pipeline incl. WebGL under the production CSP) | Pass |
 | Note: no sharing of data with peers | Private repository; raw CSVs git-ignored; only derived data shipped; user data stays in the browser | `data.test.ts` (no price fields shipped), pre-push file audit | Pass |
 

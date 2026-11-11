@@ -2,6 +2,7 @@
 import { CheckCircle2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Skeleton } from "../components/ui/Controls";
+import { PageGuide } from "../components/help/PageGuide";
 import { Panel, PageHeader } from "../components/ui/Panel";
 import { useCatalog } from "../hooks/useEngine";
 import { fmt2, fmtDate, fmtInt, fmtPct } from "../lib/format";
@@ -48,6 +49,7 @@ export default function Method() {
         Everything shown in this dashboard is computed from the data below, with the assumptions listed here. Nothing is hard-coded except
         cost defaults, which you can change on the Optimisation page.
       </PageHeader>
+      <PageGuide page="method" />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel index={0} title="Data">
